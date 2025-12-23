@@ -19,10 +19,10 @@ type XLSXUnmarshaler interface {
 	Unmarshal(*Row) error
 }
 
-// ReadStruct reads a struct from r to ptr. Accepts a ptr
-// to struct. This code expects a tag xlsx:"N", where N is the index
-// of the cell to be used. Basic types like int,string,float64 and bool
-// are supported
+// ReadStruct 从 r 读取结构体到 ptr。接受一个指向结构体的指针。
+// 此代码期望一个标签 xlsx:"N"，其中 N 是要使用的单元格索引。
+// 支持基本类型如 int、string、float64 和 bool。
+// 通过 parseValue 转换，也支持复杂类型如 map、slice、array。
 func (r *Row) ReadStruct(ptr interface{}) error {
 	if ptr == nil {
 		return errNilInterface
@@ -120,7 +120,155 @@ func (r *Row) ReadStruct(ptr interface{}) error {
 		case reflect.Bool:
 			value := cell.Bool()
 			fieldV.SetBool(value)
+		case reflect.Map, reflect.Slice, reflect.Array:
+			err := r.setComplexType(cell, fieldV, field.Type)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
+}
+
+// setComplexType 从单元格值设置复杂类型（map、slice、array），
+// 使用 parseValue 进行转换。
+func (r *Row) setComplexType(cell *Cell, fieldV reflect.Value, fieldType reflect.Type) error {
+	value, err := cell.FormattedValue()
+	if err != nil {
+		return err
+	}
+	//使用 parseValue 将字符串转换为适当的类型
+	parsedValue := parseValue(value)
+	if parsedValue == nil {
+		return nil
+	}
+	//将 parsedValue 转换为目标类型
+	convertedValue, err := convertToReflectType(parsedValue, fieldType)
+	if err != nil {
+		return err
+	}
+	if convertedValue.IsValid() && convertedValue.Type().AssignableTo(fieldType) {
+		fieldV.Set(convertedValue)
+	}
+	return nil
+}
+
+// convertToReflectType 将 interface{} 值转换为目标类型的 reflect.Value，
+// 处理 map、slice 和 array 类型。
+func convertToReflectType(value interface{}, targetType reflect.Type) (reflect.Value, error) {
+	if value == nil {
+		return reflect.Zero(targetType), nil
+	}
+	valueV := reflect.ValueOf(value)
+	valueT := valueV.Type()
+	switch targetType.Kind() {
+	case reflect.Map:
+		return convertToMap(valueV, targetType)
+	case reflect.Slice:
+		return convertToSlice(valueV, targetType)
+	case reflect.Array:
+		return convertToArray(valueV, targetType)
+	default:
+		//对于基本类型，尝试直接转换
+		if valueT.AssignableTo(targetType) {
+			return valueV, nil
+		}
+		if valueT.ConvertibleTo(targetType) {
+			return valueV.Convert(targetType), nil
+		}
+		return reflect.Value{}, errors.New("cannot convert value to target type")
+	}
+}
+
+// convertToMap 将值转换为目标类型的 map。
+func convertToMap(valueV reflect.Value, targetType reflect.Type) (reflect.Value, error) {
+	if valueV.Kind() != reflect.Map {
+		return reflect.Value{}, errors.New("value is not a map")
+	}
+	//创建目标类型的新 map
+	result := reflect.MakeMap(targetType)
+	keyType := targetType.Key()
+	elemType := targetType.Elem()
+	//遍历源 map
+	for _, key := range valueV.MapKeys() {
+		elem := valueV.MapIndex(key)
+		//转换 key
+		convertedKey, err := convertValue(key, keyType)
+		if err != nil {
+			continue
+		}
+		//转换 value
+		convertedElem, err := convertValue(elem, elemType)
+		if err != nil {
+			continue
+		}
+		result.SetMapIndex(convertedKey, convertedElem)
+	}
+	return result, nil
+}
+
+// convertToSlice 将值转换为目标类型的 slice。
+func convertToSlice(valueV reflect.Value, targetType reflect.Type) (reflect.Value, error) {
+	if valueV.Kind() != reflect.Slice && valueV.Kind() != reflect.Array {
+		return reflect.Value{}, errors.New("value is not a slice or array")
+	}
+	elemType := targetType.Elem()
+	length := valueV.Len()
+	result := reflect.MakeSlice(targetType, 0, length)
+	//遍历源 slice/array
+	for i := 0; i < length; i++ {
+		elem := valueV.Index(i)
+		convertedElem, err := convertValue(elem, elemType)
+		if err != nil {
+			continue
+		}
+		result = reflect.Append(result, convertedElem)
+	}
+	return result, nil
+}
+
+// convertToArray 将值转换为目标类型的 array。
+func convertToArray(valueV reflect.Value, targetType reflect.Type) (reflect.Value, error) {
+	if valueV.Kind() != reflect.Slice && valueV.Kind() != reflect.Array {
+		return reflect.Value{}, errors.New("value is not a slice or array")
+	}
+	elemType := targetType.Elem()
+	arrayLen := targetType.Len()
+	result := reflect.New(targetType).Elem()
+	sourceLen := valueV.Len()
+	//复制元素，最多复制源长度和数组长度的最小值
+	copyLen := sourceLen
+	if copyLen > arrayLen {
+		copyLen = arrayLen
+	}
+	for i := 0; i < copyLen; i++ {
+		elem := valueV.Index(i)
+		convertedElem, err := convertValue(elem, elemType)
+		if err != nil {
+			continue
+		}
+		result.Index(i).Set(convertedElem)
+	}
+	return result, nil
+}
+
+// convertValue 将 reflect.Value 转换为目标类型。
+func convertValue(valueV reflect.Value, targetType reflect.Type) (reflect.Value, error) {
+	if !valueV.IsValid() {
+		return reflect.Zero(targetType), nil
+	}
+	valueT := valueV.Type()
+	//直接赋值
+	if valueT.AssignableTo(targetType) {
+		return valueV, nil
+	}
+	//类型转换
+	if valueT.ConvertibleTo(targetType) {
+		return valueV.Convert(targetType), nil
+	}
+	//通过提取底层值来处理 interface{} 类型
+	if valueV.Kind() == reflect.Interface {
+		return convertValue(valueV.Elem(), targetType)
+	}
+	return reflect.Value{}, errors.New("cannot convert value to target type")
 }

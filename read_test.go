@@ -230,4 +230,125 @@ func TestRead(t *testing.T) {
 		c.Assert(readStruct.BoolVal, qt.Equals, structVal.BoolVal)
 	})
 
+	csRunO(c, "TestReadSlice", func(c *qt.C, option FileOption) {
+		type structTest struct {
+			IntSlice    []int64   `xlsx:"0"`
+			StringSlice []string  `xlsx:"1"`
+			FloatSlice  []float64 `xlsx:"2"`
+		}
+		f := NewFile(option)
+		sheet, _ := f.AddSheet("TestRead")
+		row := sheet.AddRow()
+		//设置 JSON 格式的数组字符串
+		cell0 := row.AddCell()
+		cell0.SetString("[1,2,3]")
+		cell1 := row.AddCell()
+		cell1.SetString(`["a","b","c"]`)
+		cell2 := row.AddCell()
+		cell2.SetString("[1.5,2.5,3.5]")
+
+		readStruct := structTest{}
+		err := row.ReadStruct(&readStruct)
+		if err != nil {
+			c.Error(err)
+			c.FailNow()
+		}
+		c.Assert(err, qt.Equals, nil)
+		c.Assert(readStruct.IntSlice, qt.DeepEquals, []int64{1, 2, 3})
+		c.Assert(readStruct.StringSlice, qt.DeepEquals, []string{"a", "b", "c"})
+		c.Assert(readStruct.FloatSlice, qt.DeepEquals, []float64{1.5, 2.5, 3.5})
+	})
+
+	csRunO(c, "TestReadArray", func(c *qt.C, option FileOption) {
+		type structTest struct {
+			IntArray    [3]int64  `xlsx:"0"`
+			StringArray [3]string `xlsx:"1"`
+		}
+		f := NewFile(option)
+		sheet, _ := f.AddSheet("TestRead")
+		row := sheet.AddRow()
+		//设置 JSON 格式的数组字符串
+		cell0 := row.AddCell()
+		cell0.SetString("[10,20,30]")
+		cell1 := row.AddCell()
+		cell1.SetString(`["x","y","z"]`)
+
+		readStruct := structTest{}
+		err := row.ReadStruct(&readStruct)
+		if err != nil {
+			c.Error(err)
+			c.FailNow()
+		}
+		c.Assert(err, qt.Equals, nil)
+		c.Assert(readStruct.IntArray, qt.DeepEquals, [3]int64{10, 20, 30})
+		c.Assert(readStruct.StringArray, qt.DeepEquals, [3]string{"x", "y", "z"})
+	})
+
+	csRunO(c, "TestReadMap", func(c *qt.C, option FileOption) {
+		type structTest struct {
+			StrMap map[string]interface{} `xlsx:"0"`
+			IntMap map[string]int64       `xlsx:"1"`
+		}
+		f := NewFile(option)
+		sheet, _ := f.AddSheet("TestRead")
+		row := sheet.AddRow()
+		//设置 JSON 格式的 map 字符串
+		cell0 := row.AddCell()
+		cell0.SetString(`{"name":"test","value":123,"active":true}`)
+		cell1 := row.AddCell()
+		cell1.SetString(`{"a":1,"b":2,"c":3}`)
+
+		readStruct := structTest{}
+		err := row.ReadStruct(&readStruct)
+		if err != nil {
+			c.Error(err)
+			c.FailNow()
+		}
+		c.Assert(err, qt.Equals, nil)
+		c.Assert(readStruct.StrMap["name"], qt.Equals, "test")
+		c.Assert(readStruct.StrMap["value"], qt.Equals, int64(123))
+		c.Assert(readStruct.StrMap["active"], qt.Equals, true)
+		c.Assert(readStruct.IntMap["a"], qt.Equals, int64(1))
+		c.Assert(readStruct.IntMap["b"], qt.Equals, int64(2))
+		c.Assert(readStruct.IntMap["c"], qt.Equals, int64(3))
+	})
+
+	csRunO(c, "TestReadComplexTypes", func(c *qt.C, option FileOption) {
+		type structTest struct {
+			IntVal    int8                   `xlsx:"0"`
+			StringVal string                 `xlsx:"1"`
+			IntSlice  []int64                `xlsx:"2"`
+			StrArray  [2]string              `xlsx:"3"`
+			MapVal    map[string]interface{} `xlsx:"4"`
+		}
+		f := NewFile(option)
+		sheet, _ := f.AddSheet("TestRead")
+		row := sheet.AddRow()
+		//设置基本类型和复杂类型混合的数据
+		cell0 := row.AddCell()
+		cell0.SetValue(int8(42))
+		cell1 := row.AddCell()
+		cell1.SetString("hello")
+		cell2 := row.AddCell()
+		cell2.SetString("[100,200,300]")
+		cell3 := row.AddCell()
+		cell3.SetString(`["first","second"]`)
+		cell4 := row.AddCell()
+		cell4.SetString(`{"key1":"value1","key2":42}`)
+
+		readStruct := structTest{}
+		err := row.ReadStruct(&readStruct)
+		if err != nil {
+			c.Error(err)
+			c.FailNow()
+		}
+		c.Assert(err, qt.Equals, nil)
+		c.Assert(readStruct.IntVal, qt.Equals, int8(42))
+		c.Assert(readStruct.StringVal, qt.Equals, "hello")
+		c.Assert(readStruct.IntSlice, qt.DeepEquals, []int64{100, 200, 300})
+		c.Assert(readStruct.StrArray, qt.DeepEquals, [2]string{"first", "second"})
+		c.Assert(readStruct.MapVal["key1"], qt.Equals, "value1")
+		c.Assert(readStruct.MapVal["key2"], qt.Equals, int64(42))
+	})
+
 }
