@@ -1507,5 +1507,5 @@ BSD 许可证
 ## 相关链接
 
 - [完整 API 文档](https://pkg.go.dev/github.com/tealeg/xlsx/v3)
-- [教程](https://github.com/tealeg/xlsx/blob/master/tutorial/tutorial.adoc)
+- [教程](https://github.com/Denghaoran7617/xlsx/blob/master/tutorial/tutorial-ch.md)
 
