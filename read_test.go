@@ -349,6 +349,7 @@ func TestRead(t *testing.T) {
 		c.Assert(readStruct.StrArray, qt.DeepEquals, [2]string{"first", "second"})
 		c.Assert(readStruct.MapVal["key1"], qt.Equals, "value1")
 		c.Assert(readStruct.MapVal["key2"], qt.Equals, int64(42))
+		fmt.Println(readStruct)
 	})
 
 }

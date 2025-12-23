@@ -19,7 +19,7 @@ XLSX 是一个用于简化读取和写入 Microsoft Excel XLSX 格式文件的 G
 ## 安装
 
 ```bash
-go get github.com/tealeg/xlsx/v3
+go get github.com/Denghaoran7617/xlsx
 ```
 
 ## 快速开始
@@ -30,7 +30,7 @@ go get github.com/tealeg/xlsx/v3
 package main
 
 import (
-    "github.com/tealeg/xlsx/v3"
+    "github.com/Denghaoran7617/xlsx"
 )
 
 func main() {
@@ -52,7 +52,7 @@ package main
 
 import (
     "fmt"
-    "github.com/tealeg/xlsx/v3"
+    "github.com/Denghaoran7617/xlsx"
 )
 
 func main() {
@@ -1436,7 +1436,7 @@ func SkipEmptyCells(flags *cellVisitorFlags)
 package main
 
 import (
-    "github.com/tealeg/xlsx/v3"
+    "github.com/Denghaoran7617/xlsx"
 )
 
 func main() {
@@ -1466,7 +1466,7 @@ package main
 
 import (
     "fmt"
-    "github.com/tealeg/xlsx/v3"
+    "github.com/Denghaoran7617/xlsx"
 )
 
 func main() {
@@ -1506,6 +1506,6 @@ BSD 许可证
 
 ## 相关链接
 
-- [完整 API 文档](https://pkg.go.dev/github.com/tealeg/xlsx/v3)
+- [完整 API 文档](https://pkg.go.dev/github.com/Denghaoran7617/xlsx)
 - [教程](https://github.com/Denghaoran7617/xlsx/blob/master/tutorial/tutorial-ch.md)
 

@@ -7,13 +7,13 @@
 要在代码中导入包，请使用以下行：
 
 ```go
-import "github.com/tealeg/xlsx/v3"
+import "github.com/Denghaoran7617/xlsx"
 ```
 
 如果您使用 https://blog.golang.org/using-go-modules[Go 模块]，您的 `go.mod` 文件应包含包的 `require` 行，如下所示：
 
 ```go
-require github.com/tealeg/xlsx/v3 v3.2.0
+require github.com/Denghaoran7617/xlsx v3.2.0
 ```
 
 _如果您想知道为什么我使用 `v3.2.0` 版本标签，请阅读下一章。_
@@ -274,7 +274,7 @@ import (
     "errors"
     "fmt"
 
-    "github.com/tealeg/xlsx/v3"
+    "github.com/Denghaoran7617/xlsx"
 )
 
 func cellVisitor(c *xlsx.Cell) error {
@@ -505,7 +505,7 @@ import (
     "errors"
     "fmt"
 
-    "github.com/tealeg/xlsx/v3"
+    "github.com/Denghaoran7617/xlsx"
     )
 
 func MAIN() {

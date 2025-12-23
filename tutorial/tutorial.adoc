@@ -19,11 +19,11 @@ This tutorial has been created using https://asciidoctor.org[Asciidoctor].
 
 To import the package, use the line
 
-`import "github.com/tealeg/xlsx/v3"`
+`import "github.com/Denghaoran7617/xlsx"`
 
 in your code. If you are using https://blog.golang.org/using-go-modules[go modules], your `go.mod` file should include a `require` line for the package, like so:
 
-`require github.com/tealeg/xlsx/v3 v3.2.0`
+`require github.com/Denghaoran7617/xlsx v3.2.0`
 
 _In case you are wondering, why I use the `v3.2.0` version tag, please read the next chapter._
 
@@ -402,7 +402,7 @@ import (
     "errors"
     "fmt"
 
-    "github.com/tealeg/xlsx/v3"
+    "github.com/Denghaoran7617/xlsx"
 )
 
 func cellVisitor(c *xlsx.Cell) error {
@@ -701,7 +701,7 @@ import (
     "errors"
     "fmt"
 
-    "github.com/tealeg/xlsx/v3"
+    "github.com/Denghaoran7617/xlsx"
     )
 
 func MAIN() {
