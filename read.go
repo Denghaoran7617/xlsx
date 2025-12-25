@@ -81,6 +81,9 @@ func (r *Row) ReadStruct(ptr interface{}) error {
 		}
 
 		cell := r.GetCell(pos)
+		if cell.Value == "" {
+			continue
+		}
 		fieldV := v.Field(i)
 		//continue if the field is not settable
 		if !fieldV.CanSet() {
@@ -218,7 +221,14 @@ func convertToSlice(valueV reflect.Value, targetType reflect.Type) (reflect.Valu
 	//遍历源 slice/array
 	for i := 0; i < length; i++ {
 		elem := valueV.Index(i)
-		convertedElem, err := convertValue(elem, elemType)
+		var convertedElem reflect.Value
+		var err error
+		switch elemType.Kind() {
+		case reflect.Array, reflect.Slice:
+			convertedElem, err = convertToReflectType(elem.Interface(), elemType)
+		default:
+			convertedElem, err = convertValue(elem, elemType)
+		}
 		if err != nil {
 			continue
 		}
@@ -243,7 +253,14 @@ func convertToArray(valueV reflect.Value, targetType reflect.Type) (reflect.Valu
 	}
 	for i := 0; i < copyLen; i++ {
 		elem := valueV.Index(i)
-		convertedElem, err := convertValue(elem, elemType)
+		var convertedElem reflect.Value
+		var err error
+		switch elemType.Kind() {
+		case reflect.Array, reflect.Slice:
+			convertedElem, err = convertToReflectType(elem.Interface(), elemType)
+		default:
+			convertedElem, err = convertValue(elem, elemType)
+		}
 		if err != nil {
 			continue
 		}
